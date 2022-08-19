@@ -6,7 +6,7 @@
 # <https://github.com/KFERMercer/OpenWrt-CI>
 #
 
-name: Sync Code from eSir Autobuild Script
+name: 同步 eSir 构建脚本
 
 # Add a button to trigger the workflow - Kuroko
 on: 
@@ -17,8 +17,8 @@ on:
 #    branches: 
 #      - master
 
-#  schedule:
-#    - cron: 0 19 * * *
+  schedule:
+    - cron: 0 20 * * *
 
 jobs:
 
