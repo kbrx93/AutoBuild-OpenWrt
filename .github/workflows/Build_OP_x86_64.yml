@@ -82,14 +82,14 @@ jobs:
     - name: Argon 新主题替换
       working-directory: ./openwrt
       run: |
-        cd package/lean
+        cd feeds/luci/themes
         rm -rf luci-theme-argon
         git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git
         
     - name: netdata 汉化
       working-directory: ./openwrt
       run: |
-        cd package/lean
+        cd feeds/luci/applications
         rm -rf luci-app-netdata
         git clone https://github.com/sirpdboy/luci-app-netdata.git
 
