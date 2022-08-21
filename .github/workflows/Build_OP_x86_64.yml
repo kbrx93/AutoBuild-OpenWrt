@@ -66,7 +66,13 @@ jobs:
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
         echo "src-git kenzo https://github.com/kenzok8/openwrt-packages" >> ./feeds.conf.default
+        echo "src-git small https://github.com/kenzok8/small" >> ./feeds.conf.default
         echo "src-git tencentDDNS https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns" >> ./feeds.conf.default
+
+    - name: 更新 Feeds 应用包
+      working-directory: ./openwrt
+      run: |
+        ./scripts/feeds update -a
 
     - name: 去除重复应用包
       working-directory: ./openwrt
@@ -77,10 +83,9 @@ jobs:
         sed -i 's/mosdns_neo/mosdns/g' ./feeds/packages/net/mosdns/Makefile
      
      
-    - name: 更新并安装 Feeds 应用包
+    - name: 安装 Feeds 应用包
       working-directory: ./openwrt
       run: |
-        ./scripts/feeds update -a
         ./scripts/feeds install -a
 
     #- name: Import external feeds - passwall
