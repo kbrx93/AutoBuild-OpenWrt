@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: 签出代码
       uses: actions/checkout@master
 
-    - name: Initialization environment
+    - name: 环境初始化
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -58,7 +58,7 @@ jobs:
         sudo -E apt-get -y autoremove --purge
         sudo -E apt-get clean
 
-    - name: Clone source code
+    - name: 拉取最新 Lean 源码
       env: 
         REPO_URL: https://github.com/coolsnowwolf/lede
         REPO_BRANCH: master
@@ -67,8 +67,17 @@ jobs:
         cd openwrt
         echo "src-git kenzo https://github.com/kenzok8/openwrt-packages" >> ./feeds.conf.default
         echo "src-git tencentDDNS https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns" >> ./feeds.conf.default
-        
-    - name: Update & Install feeds
+
+    - name: 去除重复应用包
+      working-directory: ./openwrt
+      run: |
+        sudo rm -rf ./feeds/packages/net/mosdns && cp -rf ./feeds/kenzo/mosdns ./feeds/packages/net/mosdns
+        sed -i 's/mosdns_neo/mosdns/g' ./feeds/kenzo/luci-app-mosdns/Makefile
+        sed -i 's/mosdns_neo/mosdns/g' ./feeds/kenzo/mosdns/Makefile
+        sed -i 's/mosdns_neo/mosdns/g' ./feeds/packages/net/mosdns/Makefile
+     
+     
+    - name: 更新并安装 Feeds 应用包
       working-directory: ./openwrt
       run: |
         ./scripts/feeds update -a
@@ -94,7 +103,7 @@ jobs:
         rm -rf luci-app-netdata
         git clone https://github.com/sirpdboy/luci-app-netdata.git
 
-    - name: Configuration Customization - Build_x86_64
+    - name: 自定义配置注入
       env:
         CONFIG_FILE: 'x86_64.config'
       run: |
@@ -102,20 +111,20 @@ jobs:
         chmod +x ./customize.sh && ./customize.sh
         cd openwrt && make defconfig
         
-    - name: Download package
+    - name: 应用包下载
       working-directory: ./openwrt
       run: |
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    - name: Build firmware
+    - name: 固件构建
       working-directory: ./openwrt
       run: |
         echo -e "$(nproc) thread build."
         make -j$(nproc) V=s
 
-    - name : Upload artifact
+    - name : 上传固件
       uses: actions/upload-artifact@master
       with:
         name: OpenWrt
