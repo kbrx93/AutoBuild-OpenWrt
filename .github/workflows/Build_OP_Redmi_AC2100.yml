@@ -5,31 +5,31 @@
 # Youtube Channel: https://goo.gl/fvkdwm 
 #=================================================
 
-name: Build_Redmi_AC2100
+name: 构建 VPN 固件
 
 on: 
   release:
     types: [published]
 
   #push:
-  #  branches: 
-  #    - master
+  # branches: 
+  #   - master
 
-  #schedule:
-  #  - cron: 0 8 * * 5
+  schedule:
+    - cron: 0 10 * * 4
   
-  #watch:
-  #  types: [started]
+  watch:
+    types: [started]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: 签出代码
       uses: actions/checkout@master
 
-    - name: Initialization environment
+    - name: 环境初始化
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -57,27 +57,53 @@ jobs:
         sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync
         sudo -E apt-get -y autoremove --purge
         sudo -E apt-get clean
-    - name: Clone source code
+    - name: 拉取最新 Lean 源码
       env: 
         REPO_URL: https://github.com/coolsnowwolf/lede
         REPO_BRANCH: master
       run: |
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
-        echo "src-git ssrp https://github.com/fw876/helloworld.git" >> ./feeds.conf.default
-    - name: Update & Install feeds
+        echo "src-git kenzo https://github.com/kenzok8/openwrt-packages" >> ./feeds.conf.default
+        echo "src-git small https://github.com/kenzok8/small" >> ./feeds.conf.default
+        echo "src-git tencentDDNS https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns" >> ./feeds.conf.default
+    - name: 更新 Feeds 应用包
       working-directory: ./openwrt
       run: |
         ./scripts/feeds update -a
+    - name: 去除重复应用包
+      working-directory: ./openwrt
+      run: |
+        sudo rm -rf ./feeds/packages/net/mosdns && cp -rf ./feeds/kenzo/mosdns ./feeds/packages/net/mosdns
+        sed -i 's/mosdns_neo/mosdns/g' ./feeds/kenzo/luci-app-mosdns/Makefile
+        sed -i 's/mosdns_neo/mosdns/g' ./feeds/kenzo/mosdns/Makefile
+        sed -i 's/mosdns_neo/mosdns/g' ./feeds/packages/net/mosdns/Makefile
+     
+    - name: 安装 Feeds 应用包
+      working-directory: ./openwrt
+      run: |
         ./scripts/feeds install -a
-        ./scripts/feeds install -a
-        
-    #- name: Import external feeds - JerryKuKu Argon
+    #- name: Import external feeds - passwall
     #  working-directory: ./openwrt
     #  run: |
-    #    git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon-jerrykuku   
-  
-    - name: Configuration Customization - Build_Redmi_AC2100
+    #    git clone https://github.com/xiaorouji/openwrt-passwall.git package/lienol
+    #    git clone "your_github_link" package/"your_folder_name"      
+
+    - name: Argon 新主题替换
+      working-directory: ./openwrt
+      run: |
+        cd feeds/luci/themes
+        rm -rf luci-theme-argon
+        git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git
+        
+    - name: netdata 汉化
+      working-directory: ./openwrt
+      run: |
+        cd feeds/luci/applications
+        rm -rf luci-app-netdata
+        git clone https://github.com/sirpdboy/luci-app-netdata.git
+    
+    - name: 自定义配置注入
       env:
         CONFIG_FILE: 'redmi_ac2100.config'
       run: |
@@ -85,18 +111,18 @@ jobs:
         chmod +x ./customize.sh && ./customize.sh
         cd openwrt && make defconfig
         
-    - name: Download package
+    - name: 应用包下载
       working-directory: ./openwrt
       run: |
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-    - name: Build firmware
+    - name: 固件构建
       working-directory: ./openwrt
       run: |
         echo -e "$(nproc) thread build."
         make -j$(nproc) V=s
-    - name : Upload artifact
+    - name : 上传固件
       uses: actions/upload-artifact@master
       with:
         name: OpenWrt
