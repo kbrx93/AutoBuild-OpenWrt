@@ -5,7 +5,7 @@
 # Youtube Channel: https://goo.gl/fvkdwm 
 #=================================================
 
-name: Build_x86_64
+name: 构建旁路固件
 
 on: 
   release:
@@ -18,8 +18,8 @@ on:
   schedule:
     - cron: 0 6 * * 4
   
-  #watch:
-  #  types: [started]
+  watch:
+    types: [started]
 
 jobs:
   build:
