@@ -5,7 +5,7 @@
 # Youtube Channel: https://goo.gl/fvkdwm 
 #=================================================
 
-name: 构建旁路固件
+name: 构建 Proxy 固件
 
 on: 
   release:
