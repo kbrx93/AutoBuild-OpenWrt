@@ -8,6 +8,7 @@
 name: 构建 VPN 固件
 
 on: 
+  workflow_dispatch:
   release:
     types: [published]
 
